@@ -23,7 +23,7 @@
 
       $this->base_url = 'https://ravesandboxapi.flutterwave.com';
       $this->id = 'rave';
-      $this->icon = plugins_url('assets/img/rave.svg', FLW_WC_PLUGIN_FILE);
+      $this->icon = plugins_url('assets/img/rave.png', FLW_WC_PLUGIN_FILE);
       $this->has_fields         = false;
       $this->method_title       = __( 'Rave', 'flw-payments' );
       $this->method_description = __( 'Rave allows you to accept payment from cards and bank accounts in multiple currencies. You can also accept payment offline via USSD and POS.', 'flw-payments' );
