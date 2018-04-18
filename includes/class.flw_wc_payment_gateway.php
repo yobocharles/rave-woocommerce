@@ -347,25 +347,22 @@
               $order_id = urldecode( $_GET['order_id'] );
             }
             $order = wc_get_order( $order_id );
-            $redirectURL =   $order->get_checkout_payment_url( true );
+            $redirectURL = $order->get_checkout_payment_url( true );
             header("Location: ".$redirectURL);
             die(); 
           }
          
           if ( isset( $_POST['txRef'] ) || isset($_GET['txref']) ) {
-              echo $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
+              $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
 
-               $o = explode( '_', $txn_ref );
-             echo $order_id = intval( $o[1] );
+              $o = explode('_', $txn_ref);
+              $order_id = intval( $o[1] );
               $order = wc_get_order( $order_id );
-              print_r($order);
               $payment = new Rave($publicKey, $secretKey, $txn_ref, $env, $overrideRef);
           
               $payment->logger->notice('Payment completed. Now requerying payment.');
               
-              $payment
-              ->eventHandler(new myEventHandler($order))
-              ->requeryTransaction(urldecode($txn_ref));
+              $payment->eventHandler(new myEventHandler($order))->requeryTransaction(urldecode($txn_ref));
               
               $redirect_url = $this->get_return_url( $order );
               header("Location: ".$redirect_url);
