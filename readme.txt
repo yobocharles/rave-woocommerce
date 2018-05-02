@@ -28,9 +28,9 @@ Rave is available in:
 
 = Suggestions / Feature Request =
 
-If you have suggestions or a new feature request, feel free to get in touch with us via [http://paystack.com](http://paystack.com)
+If you have suggestions or a new feature request, feel free to get in touch with us via [https://rave.flutterwave.com](https://rave.flutterwave.com)
 
-You can also follow us on Twitter! **[@paystack](http://twitter.com/paystack)**
+You can also follow us on Twitter! **[@theflutterwave](https://twitter.com/theflutterwave)**
 
 
 == Installation ==
