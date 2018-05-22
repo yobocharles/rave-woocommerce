@@ -264,13 +264,31 @@
         $order     = wc_get_order( $order_id );
         
         $txnref    = "WOOC_" . $order_id . '_' . time();
-        $amount    = $order->order_total;
-        $email     = $order->billing_email;
-        $currency     = $order->get_order_currency();
+       
+        if (version_compare(WOOCOMMERCE_VERSION, '2.7.0', '>=')){
+               $amount    = $order->get_total();
+                $email     = $order->get_billing_email();
+                $currency     = $order->get_currency();
+               $main_order_key = $order->get_order_key();
+        }else{
+            $args = array(
+                'name'    => $order->billing_first_name . ' ' . $order->billing_last_name,
+                'email'   => $order->billing_email,
+                'contact' => $order->billing_phone,
+            );
+            $amount    = $order->order_total;
+            $main_order_key = $order->order_key;
+            $email     = $order->billing_email;
+            $currency     = $order->get_order_currency();
+        }
+        
+        // $amount    = $order->order_total;
+        // $email     = $order->billing_email;
+        // $currency     = $order->get_order_currency();
         $country  = $this->country;
         $payment_style  = $this->payment_style;
 
-        if ( $order->order_key == $order_key ) {
+        if ( $main_order_key == $order_key ) {
 
           $payment_args = compact( 'amount', 'email', 'txnref', 'p_key', 'currency', 'country', 'payment_method','cb_url','payment_style');
           $payment_args['desc']   = $this->get_option( 'modal_description' );
