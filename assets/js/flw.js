@@ -43,9 +43,26 @@ if ( form ) {
 
 }
 
+//switch country base on currency
+switch (curr) {
+  case 'KES':
+    country = 'KE';
+    break;
+  case 'GHS':
+    country = 'GH';
+    break;
+  case 'ZAR':
+    country = 'ZA';
+    break;
+
+  default:
+    country = 'NG';
+    break;
+}
+
 var processPayment = function() {
 
- var popup = getpaidSetup({
+  var popup = getpaidSetup({
     amount: amount,
     country: country,
     currency: curr,
@@ -79,6 +96,8 @@ var sendPaymentRequestResponse = function( res ) {
       setTimeout( redirectTo, 5000, redirect_url );
     } );
 };
+
+//redirect function
 var redirectPost = function(location, args){
   console.log(args);
     var form = '';
