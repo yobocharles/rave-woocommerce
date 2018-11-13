@@ -295,6 +295,8 @@
           $payment_args['desc']   = filter_var($this->description, FILTER_SANITIZE_STRING);
           $payment_args['title']  = filter_var($this->title, FILTER_SANITIZE_STRING);
           $payment_args['logo'] = filter_var($this->modal_logo, FILTER_SANITIZE_URL);
+          $payment_args['firstname'] = $order->billing_first_name;
+          $payment_args['lastname'] = $order->billing_last_name;
         }
 
         update_post_meta( $order_id, '_flw_payment_txn_ref', $txnref );

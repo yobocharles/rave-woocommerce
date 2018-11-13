@@ -21,6 +21,8 @@ var amount = flw_payment_args.amount,
     curr   = flw_payment_args.currency,
     desc   = flw_payment_args.desc,
     email  = flw_payment_args.email,
+    firstname = flw_payment_args.firstname,
+    lastname = flw_payment_args.lastname,
     form   = jQuery( '#flw-pay-now-button' ),
     logo   = flw_payment_args.logo || raveLogo,
     p_key  = flw_payment_args.p_key,
@@ -61,6 +63,7 @@ switch (curr) {
 }
 
 var processPayment = function() {
+  console.log(firstname+" .......... "+lastname);
 
   var popup = getpaidSetup({
     amount: amount,
@@ -70,6 +73,8 @@ var processPayment = function() {
     custom_title: title,
     custom_logo: logo,
     customer_email: email,
+    customer_firstname: firstname,
+    customer_lastname: lastname,
     txref: txref,
     payment_method: paymentMethod,
     PBFPubKey: p_key,
@@ -99,7 +104,7 @@ var sendPaymentRequestResponse = function( res ) {
 
 //redirect function
 var redirectPost = function(location, args){
-  console.log(args);
+  // console.log(args);
     var form = '';
     jQuery.each( args, function( key, value ) {
         // value = value.split('"').join('\"')
