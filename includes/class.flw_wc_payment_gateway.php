@@ -264,12 +264,13 @@
         $order     = wc_get_order( $order_id );
         
         $txnref    = "WOOC_" . $order_id . '_' . time();
+        $txnref    = filter_var($txnref, FILTER_SANITIZE_STRING);//sanitizr=e this field
        
         if (version_compare(WOOCOMMERCE_VERSION, '2.7.0', '>=')){
-               $amount    = $order->get_total();
-                $email     = $order->get_billing_email();
-                $currency     = $order->get_currency();
-               $main_order_key = $order->get_order_key();
+              $amount    = $order->get_total();
+              $email     = $order->get_billing_email();
+              $currency     = $order->get_currency();
+              $main_order_key = $order->get_order_key();
         }else{
             $args = array(
                 'name'    => $order->billing_first_name . ' ' . $order->billing_last_name,
@@ -291,9 +292,11 @@
         if ( $main_order_key == $order_key ) {
 
           $payment_args = compact( 'amount', 'email', 'txnref', 'p_key', 'currency', 'country', 'payment_method','cb_url','payment_style');
-          $payment_args['desc']   = $this->get_option( 'modal_description' );
-          $payment_args['title']  = $this->get_option( 'modal_title' );
-          $payment_args['logo'] = $this->get_option( 'modal_logo' );
+          $payment_args['desc']   = filter_var($this->description, FILTER_SANITIZE_STRING);
+          $payment_args['title']  = filter_var($this->title, FILTER_SANITIZE_STRING);
+          $payment_args['logo'] = filter_var($this->modal_logo, FILTER_SANITIZE_URL);
+          $payment_args['firstname'] = $order->billing_first_name;
+          $payment_args['lastname'] = $order->billing_last_name;
         }
 
         update_post_meta( $order_id, '_flw_payment_txn_ref', $txnref );
@@ -338,15 +341,19 @@
           if($this->modal_logo){
             $rave_m_logo = $this->modal_logo;
           }
+
+          //set variables
+          $modal_desc = $this->description != '' ? filter_var($this->description, FILTER_SANITIZE_STRING) : "Payment for Order ID: $order_id on ". get_bloginfo('name');
+          $modal_title = $this->title != '' ? filter_var($this->title, FILTER_SANITIZE_STRING) : get_bloginfo('name');
           
           // Make payment
           $payment
           ->eventHandler(new myEventHandler($order))
           ->setAmount($order->order_total)
           ->setPaymentMethod($this->payment_method) // value can be card, account or both
-          ->setDescription("Payment for Order ID: $order_id on ". get_bloginfo('name'))
+          ->setDescription($modal_desc)
           ->setLogo($rave_m_logo)
-          ->setTitle(get_bloginfo('name'))
+          ->setTitle($modal_title)
           ->setCountry($this->country)
           ->setCurrency($order->get_order_currency())
           ->setEmail($order->billing_email)
