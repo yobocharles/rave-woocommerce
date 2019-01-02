@@ -286,7 +286,25 @@
         // $amount    = $order->order_total;
         // $email     = $order->billing_email;
         // $currency     = $order->get_order_currency();
-        $country  = $this->country;
+        
+        //set the currency to route to their countries
+        switch ($currency) {
+            case 'KES':
+              $country = 'KE';
+              break;
+            case 'GHS':
+              $country = 'GH';
+              break;
+            case 'ZAR':
+              $country = 'ZA';
+              break;
+            
+            default:
+              $country = 'NG';
+              break;
+        }
+        
+        //$country  = $this->country;
         $payment_style  = $this->payment_style;
 
         if ( $main_order_key == $order_key ) {
