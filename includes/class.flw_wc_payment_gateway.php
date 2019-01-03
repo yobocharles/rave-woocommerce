@@ -160,6 +160,7 @@
             'NG' => esc_html_x( 'NG', 'country', 'flw-payments' ),
             'GH' => esc_html_x( 'GH', 'country', 'flw-payments' ),
             'KE' => esc_html_x( 'KE', 'country', 'flw-payments' ),
+            'ZA' => esc_html_x( 'ZA', 'country', 'flw-payments' ),
           ),
           'default'     => 'NG'
         ),
