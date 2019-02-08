@@ -1,10 +1,10 @@
 # WooCommerce Rave Payment Gateway
 
- - **Contributors:** bosunolanrewaju, flutterwave
- - **Tags:** rave, woocommerce, payment gateway, bank account, credit card, debit card, nigeria, kenya, international, mastercard, visa
+ - **Contributors:** Flutterwave Developers
+ - **Tags:** rave, woocommerce, payment gateway, bank account, credit card, debit card, nigeria, kenya, international, mastercard, visa, barter
  - **Requires at least:** 4.4
- - **Tested up to:** 4.6
- - **Stable tag:** 1.0.0
+ - **Tested up to:** 5.0.3
+ - **Stable tag:** 2.0.0
  - **License:** MIT - see below
 
 Take payments on your store using Rave.
