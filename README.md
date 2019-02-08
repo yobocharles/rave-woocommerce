@@ -80,7 +80,7 @@ To configure the plugin, go to __WooCommerce > Settings__ from the left menu, cl
 
 #####2. Rave WooCommerce Payment Gateway on woocommerce order checkout page
 ###
-![Screenshot 2](https://cloud.githubusercontent.com/assets/8383666/21472783/a87138de-cae9-11e6-9330-4550c45a028c.PNG)
+![Screenshot 2](https://cloud.githubusercontent.com/assets/8383666/21472783/a87138de-cae9-11e6-9330-4550c45a028c.png)
 
 
 #####3. Rave pay modal showing card payment option
@@ -90,7 +90,7 @@ To configure the plugin, go to __WooCommerce > Settings__ from the left menu, cl
 
 #####4. Rave pay modal showing account payment option
 ###
-![Screenshot 4](assets/img/screen3.png)
+![Screenshot 4](assets/img/screen3.PNG)
 
 
 
