@@ -49,8 +49,11 @@
 
       add_action( 'admin_notices', array( $this, 'admin_notices' ) );
       add_action( 'woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
-      add_action( 'woocommerce_api_flw_wc_payment_gateway', array( $this, 'flw_verify_payment' ) );
+      add_action( 'woocommerce_api_flw_wc_payment_gateway', array($this, 'flw_verify_payment'));
 
+      // Webhook listener/API hook
+      add_action( 'woocommerce_api_flw_wc_payment_webhook', array($this, 'flw_rave_webhooks'));
+      
       if ( is_admin() ) {
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
       }
@@ -94,6 +97,17 @@
           'description' => __( 'Check this box if you\'re using your live keys.', 'flw-payments' ),
           'default'     => 'no',
           'desc_tip'    => true
+        ),
+        'webhook' => array(
+          'title'       => __( 'Webhook Instruction', 'flw-payments' ),
+          'type'        => 'hidden',
+          'description' => __( 'Please copy this webhook URL and paste on the webhook section on your dashboard <strong style="color: red"><pre><code>'.WC()->api_request_url('Flw_WC_Payment_Webhook').'</code></pre></strong> (<a href="https://rave.flutterwave.com/dashboard/settings/webhooks" target="_blank">Live Account</a>) & (<a href="https://ravesandbox.flutterwave.com/dashboard/settings/webhooks" target="_blank">Test Account</a>)', 'flw-payments' ),
+        ),
+        'secret_hash' => array(
+          'title'       => __( 'Enter Secret Hash', 'flw-payments' ),
+          'type'        => 'text',
+          'description' => __( 'Ensure that <b>SECRET HASH</b> is the same with the one on your Rave dashboard', 'flw-payments' ),
+          'default'     => 'Rave-Secret-Hash'
         ),
         'title' => array(
           'title'       => __( 'Payment method title', 'flw-payments' ),
@@ -397,7 +411,6 @@
          
           if ( isset( $_POST['txRef'] ) || isset($_GET['txref']) ) {
               $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
-
               $o = explode('_', $txn_ref);
               $order_id = intval( $o[1] );
               $order = wc_get_order( $order_id );
@@ -411,10 +424,84 @@
               header("Location: ".$redirect_url);
               die(); 
           }else{
+            $payment = new Rave($publicKey, $secretKey, $txn_ref, $env, $overrideRef);
+          
+            $payment->logger->notice('Error with requerying payment.');
+            
+            $payment->eventHandler(new myEventHandler($order))->doNothing();
               die();
           }
       }
     }
+
+    /**
+	 * Process Webhook
+	 */
+    public function flw_rave_webhooks() {
+
+      // Retrieve the request's body
+      $body = @file_get_contents("php://input");
+
+      // retrieve the signature sent in the request header's.
+      $signature = (isset($_SERVER['HTTP_VERIF_HASH']) ? $_SERVER['HTTP_VERIF_HASH'] : '');
+
+      /* It is a good idea to log all events received. Add code *
+      * here to log the signature and body to db or file       */
+
+      if (!$signature) {
+          // only a post with rave signature header gets our attention
+          exit();
+      }
+
+      // Store the same signature on your server as an env variable and check against what was sent in the headers
+      $local_signature = $this->get_option('secret_hash');
+
+      // confirm the event's signature
+      if( $signature !== $local_signature ){
+        // silently forget this ever happened
+        exit();
+      }
+      sleep(10);
+
+      http_response_code(200); // PHP 5.4 or greater
+      // parse event (which is json string) as object
+      // Give value to your customer but don't give any output
+      // Remember that this is a call from rave's servers and 
+      // Your customer is not seeing the response here at all
+      $response = json_decode($body);
+      if ($response->status == 'successful') {
+
+        $getOrderId = explode('_', $response->txRef);
+        $orderId = $getOrderId[1];
+        // $order = wc_get_order( $orderId );
+        $order = new WC_Order($orderId);
+
+        if ($order->status == 'pending') {
+          $order->update_status('processing');
+          $order->add_order_note('Payment was successful on Rave and verified via webhook');
+          $customer_note  = 'Thank you for your order.<br>';
+
+          $order->add_order_note( $customer_note, 1 );
+      
+          wc_add_notice( $customer_note, 'notice' );
+        }
+
+        
+        // $order->payment_complete($order->id);
+        // $order->add_order_note('Payment was successful on Rave and verified via webhook');
+        // $order->add_order_note('Flutterwave transaction reference: '.$response->flwRef); 
+        // $customer_note  = 'Thank you for your order.<br>';
+        // $customer_note .= 'Your payment was successful, we are now <strong>processing</strong> your order.';
+
+        // $order->add_order_note( $customer_note, 1 );
+    
+        // wc_add_notice( $customer_note, 'notice' );
+        // $this->flw_verify_payment();
+      }
+      exit();    
+
+    }
+
   }
   
 ?>

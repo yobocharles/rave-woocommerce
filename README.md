@@ -1,10 +1,10 @@
 # WooCommerce Rave Payment Gateway
 
- - **Contributors:** bosunolanrewaju, flutterwave
- - **Tags:** rave, woocommerce, payment gateway, bank account, credit card, debit card, nigeria, kenya, international, mastercard, visa
+ - **Contributors:** Flutterwave Developers
+ - **Tags:** rave, woocommerce, payment gateway, bank account, credit card, debit card, nigeria, kenya, international, mastercard, visa, barter
  - **Requires at least:** 4.4
- - **Tested up to:** 4.6
- - **Stable tag:** 1.0.0
+ - **Tested up to:** 5.0.3
+ - **Stable tag:** 2.0.0
  - **License:** MIT - see below
 
 Take payments on your store using Rave.
@@ -38,7 +38,7 @@ Rave is available in:
 *   Click on __Install Now__ on __Rave Woocommerce Payment Gateway__ to install the plugin on your site.
 *   Confirm the installation.
 *   Activate the plugin.
-*   Click on "WooCommerce > Settings" from the left menu and click the "Checkout" tab.
+*   Click on "WooCommerce > Settings" from the left menu and click the __"Payments"__ tab.
 *   Click on the __Rave__ link from the available Checkout Options
 *   Configure your __Rave Payment Gateway__ settings accordingly.
 
@@ -48,7 +48,7 @@ Rave is available in:
 *  Login to your WordPress Admin. Click on "Plugins > Add New" from the left menu.
 *  Click on the "Upload" option, then click "Choose File" to select the zip file you downloaded. Click "OK" and "Install Now" to complete the installation.
 *  Activate the plugin.
-*  Click on "WooCommerce > Settings" from the left menu and click the "Checkout" tab.
+*  Click on "WooCommerce > Settings" from the left menu and click the __"Payments"__ tab.
 *  Click on the __Rave__ link from the available Checkout Options
 *  Configure your __Rave Payment Gateway__ settings accordingly.
 
@@ -57,12 +57,16 @@ For FTP manual installation, [check here](http://codex.wordpress.org/Managing_Pl
 
 
 ### Configure the plugin
-To configure the plugin, go to __WooCommerce > Settings__ from the left menu, click __Checkout__ tab. Click on __Rave__.
+To configure the plugin, go to __WooCommerce > Settings__ from the left menu, click __Payments__ tab. Click on __Rave__.
 
 * __Enable/Disable__ - check the box to enable Rave Payment Gateway.
-* __Pay Button Public Key__ - Enter your public key which can be retrieved from the "Pay Buttons" page on your Rave account dashboard.
-* __Modal Title__ - (Optional) customize the title of the Pay Modal. Default is FLW PAY.
-* __Modal Description__ - (Optional) customize the description on the Pay Modal. Default is FLW PAY MODAL.
+* __Mode__ - check the box to enable Live Mode.
+* __Webhook Instruction__ - please ensure that you copied the url displayed in red into your Rave dashboard as described.
+* __Enter Secret Hash__ - ensure that secret hash entered is the same with the one on your Rave dashboard.
+* __Rave Test Public Key__ - enter your test public key ravesandbox.flutterwave.com.
+* __Rave Test Secret Key__ - enter your test secret key ravesandbox.flutterwave.com.
+* __Rave Live Public Key__ - enter your live public key rave.flutterwave.com.
+* __Rave Live Secret Key__ - enter your live secret key rave.flutterwave.com.
 * Click __Save Changes__ to save your changes.
 
 
@@ -71,7 +75,7 @@ To configure the plugin, go to __WooCommerce > Settings__ from the left menu, cl
 
 #####1. Rave WooCommerce Payment Gateway Setting Page
 ###
-![Screenshot 1](https://cloud.githubusercontent.com/assets/8383666/21582926/14732292-d06a-11e6-87f6-e4d7f886c0e2.png)
+![Screenshot 1](assets/img/screen1.PNG)
 
 
 #####2. Rave WooCommerce Payment Gateway on woocommerce order checkout page
@@ -81,12 +85,12 @@ To configure the plugin, go to __WooCommerce > Settings__ from the left menu, cl
 
 #####3. Rave pay modal showing card payment option
 ###
-![Screenshot 3](https://cloud.githubusercontent.com/assets/8383666/21472837/19da2ec6-caeb-11e6-898c-205f967638e5.png)
+![Screenshot 3](assets/img/screen2.PNG)
 
 
 #####4. Rave pay modal showing account payment option
 ###
-![Screenshot 4](https://cloud.githubusercontent.com/assets/8383666/21472835/094bbd4a-caeb-11e6-9fcd-31991f2e5ed1.png)
+![Screenshot 4](assets/img/screen3.PNG)
 
 
 
