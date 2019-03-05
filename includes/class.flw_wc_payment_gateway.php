@@ -47,6 +47,25 @@
       $this->country = $this->get_option( 'country' );
       $this->modal_logo = $this->get_option( 'modal_logo' );
 
+      // enable saved cards
+      $this->saved_cards = $this->get_option( 'saved_cards' ) === 'yes' ? true : false;
+
+      // declare support for Woocommerce subscription
+      $this->supports = array(
+        'products',
+        'tokenization',
+        'subscriptions',
+        'subscription_cancellation', 
+        'subscription_suspension', 
+        'subscription_reactivation',
+        'subscription_amount_changes',
+        'subscription_date_changes',
+        'subscription_payment_method_change',
+        'subscription_payment_method_change_customer',
+        'subscription_payment_method_change_admin',
+        'multiple_subscriptions',
+      );
+
       add_action( 'admin_notices', array( $this, 'admin_notices' ) );
       add_action( 'woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
       add_action( 'woocommerce_api_flw_wc_payment_gateway', array($this, 'flw_verify_payment'));
@@ -65,7 +84,7 @@
       if ( 'yes' === $this->go_live ) {
         $this->base_url = 'https://api.ravepay.co';
         $this->public_key   = $this->live_public_key;
-       $this->secret_key   = $this->live_secret_key;
+        $this->secret_key   = $this->live_secret_key;
      
       }
 
@@ -178,11 +197,19 @@
           'default'     => 'NG'
         ),
         'modal_logo' => array(
-           'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
-           'type'        => 'text',
-           'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
-           'default'     => ''
-         )
+          'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
+          'type'        => 'text',
+          'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
+          'default'     => ''
+        ),
+        'saved_cards'   => array(
+          'title'       => __('Saved Cards', 'flw-payments' ),
+          'label'       => __('Enable Payment via Saved Cards', 'flw-payments' ),
+          'type'        => 'checkbox',
+          'description' => __('If enabled, users will be able to pay with a saved card during checkout. Card details are saved on Rave servers, not on your store.<br>Note that you need to have a valid SSL certificate installed.', 'flw-payments' ),
+          'default'     => 'no',
+          'desc_tip'    => true,
+        ),
 
       );
 
@@ -195,12 +222,227 @@
      */
     public function process_payment( $order_id ) {
 
-      $order = wc_get_order( $order_id );
+      if ( isset( $_POST['wc_rave-payment-token']) && 'new' !== $_POST['wc_rave-payment-token'] ) {
+        
+        $token_id = wc_clean( $_POST['wc_rave-payment-token'] );
+        $token = WC_Payment_Tokens::get( $token_id );
 
-      return array(
-        'result'   => 'success',
-        'redirect' => $order->get_checkout_payment_url( true )
-      );
+        if ( $token->get_user_id() !== get_current_user_id() ) {
+
+          wc_add_notice( 'Invalid token ID', 'error' );
+  
+          return;
+  
+        } else {
+  
+          $status = $this->process_token_payment( $token->get_token(), $order_id );
+  
+          if( $status ) {
+  
+            $order = wc_get_order( $order_id );
+  
+            return array(
+              'result'   => 'success',
+              'redirect' => $this->get_return_url( $order )
+            );
+  
+          }
+  
+        }
+
+      } else {
+
+        if ( is_user_logged_in() && isset( $_POST[ 'wc_rave-new-payment-method' ] ) && true === (bool) $_POST[ 'wc_rave-new-payment-method' ] && $this->saved_cards ) {
+
+          update_post_meta( $order_id, '_wc_rave_save_card', true );
+  
+        }
+  
+        $order = wc_get_order( $order_id );
+  
+        return array(
+          'result'   => 'success',
+          'redirect' => $order->get_checkout_payment_url( true )
+        );
+
+      }
+
+    }
+
+    /**
+     * Process a token payment
+     */
+    public function process_token_payment( $token, $order_id ) {
+
+      if ( $token && $order_id ) {
+
+        $order            = wc_get_order( $order_id );
+
+        $txnref           = 'WOOC_' . $order_id . '_' .time();
+
+        $order_amount     = method_exists( $order, 'get_total' ) ? $order->get_total() : $order->order_total;
+
+        $order_currency   = method_exists( $order, 'get_currency' ) ? $order->get_currency() : $order->get_order_currency();
+
+        $first_name = method_exists( $order, 'get_billing_first_name' ) ? $order->get_billing_first_name() : $order->billing_first_name;
+        $last_name  = method_exists( $order, 'get_billing_last_name' ) ? $order->get_billing_last_name() : $order->billing_last_name;
+        $email      = method_exists( $order, 'get_billing_email' ) ? $order->get_billing_email() : $order->billing_email;
+
+        $headers = array(
+          'Content-Type'	=> 'application/json'
+        );
+
+        if ( strpos( $token, '##' ) !== false ) {
+          $payment_token = explode( '##', $token );
+          $token_code    = $payment_token[0];
+        } else {
+          $token_code = $token;
+        }
+
+        $body = array(
+          'SECKEY'    => $this->secret_key,
+          'token'     => $token_code,
+          'currency'  => $order_currency,
+          'amount'    => $order_amount,
+          'email'     => $email,
+          'firstname' => $first_name,
+          'lastname'  => $last_name,
+          'txRef'     => $txnref,
+          'meta'      => array(
+            array(
+              'metaname'  => 'Order ID',
+              'metavalue' => $order_id,
+            ),
+          ),
+        );
+
+        $args = array(
+          'headers'	=> $headers,
+          'body'		=> json_encode( $body ),
+          'timeout'	=> 60
+        );
+        
+        $url =  $this->base_url.'/flwv3-pug/getpaidx/api/tokenized/charge';
+
+        $request  = wp_remote_post( $url, $args );
+
+        if ( ! is_wp_error( $request ) && 200 == wp_remote_retrieve_response_code( $request ) ) {
+
+            $response = json_decode( wp_remote_retrieve_body( $request ) );
+            $status	= $response->status;
+            $response_code = $response->data->chargeResponseCode;
+            $payment_currency = $response->data->currency;
+
+            $gateway_symbol = get_woocommerce_currency_symbol( $payment_currency );
+            $valid_response_code	= array( '0', '00');
+
+            if ( 'success' === $status && in_array( $response_code, $valid_response_code ) ) {
+
+              if ( in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ) ) ) {
+
+                wp_redirect( $this->get_return_url( $order ) );
+                exit;
+
+              }
+
+              $order_currency = $order->get_currency();
+              $currency_symbol= get_woocommerce_currency_symbol( $order_currency );
+              $order_total	= $order->get_total();
+              $amount_paid	= $response->data->amount;
+              $txn_ref 		= $response->data->txRef;
+              $payment_ref 	= $response->data->flwRef;
+              $amount_charged = $response->data->charged_amount;
+
+              if ( $this->is_wc_lt( '3.0' ) ) {
+                update_post_meta( $order_id, '_rave_currency', $payment_currency );
+              } else {
+                $order->update_meta_data( '_rave_currency', $payment_currency );
+              }
+
+              // check if the amount paid is equal to the order amount.
+              if ( $amount_paid < $order_total ) {
+
+                $order->update_status( 'on-hold', '' );
+
+                update_post_meta( $order_id, '_transaction_id', $txn_ref );
+
+                $notice = 'Thank you for shopping with us.<br />Your payment was successful, but the amount paid is not the same as the total order amount.<br />Your order is currently on-hold.<br />Kindly contact us for more information regarding your order and payment status.';
+                $notice_type = 'notice';
+
+                // Add Customer Order Note
+                $order->add_order_note( $notice, 1 );
+
+                // Add Admin Order Note
+                $order->add_order_note( '<strong>Look into this order</strong><br />This order is currently on hold.<br />Reason: Amount paid is less than the total order amount.<br />Amount Paid was <strong>'. $currency_symbol . $amount_paid . '</strong> while the total order amount is <strong>'. $currency_symbol . $order_total . '</strong><br /><strong>Transaction Reference:</strong> ' . $txn_ref . ' | <strong>Payment Reference:</strong> ' . $payment_ref );
+
+                wc_reduce_stock_levels( $order_id );
+
+                wc_add_notice( $notice, $notice_type );
+
+              } else {
+
+                if( $payment_currency !== $order_currency ) {
+
+                  $order->update_status( 'on-hold', '' );
+
+                  update_post_meta( $order_id, '_transaction_id', $txn_ref );
+
+                  $notice = 'Thank you for shopping with us.<br />Your payment was successful, but the payment currency is different from the order currency.<br />Your order is currently on-hold.<br />Kindly contact us for more information regarding your order and payment status.';
+                  $notice_type = 'notice';
+
+                  // Add Customer Order Note
+                  $order->add_order_note( $notice, 1 );
+
+                  // Add Admin Order Note
+                  $order->add_order_note( '<strong>Look into this order</strong><br />This order is currently on hold.<br />Reason: Order currency is different from the payment currency.<br /> Order Currency is <strong>'. $order_currency . ' ('. $currency_symbol . ')</strong> while the payment currency is <strong>'. $payment_currency . ' ('. $gateway_symbol . ')</strong><br /><strong>Transaction Reference:</strong> ' . $txn_ref . ' | <strong>Payment Reference:</strong> ' . $payment_ref );
+
+                  wc_reduce_stock_levels( $order_id );
+
+                  wc_add_notice( $notice, $notice_type );
+
+                } else {
+
+                  $order->payment_complete( $txn_ref );
+
+                  $order->add_order_note( sprintf( 'Payment via Rave successful (<strong>Transaction Reference:</strong> %s | <strong>Payment Reference:</strong> %s)', $txn_ref, $payment_ref ) );
+
+                }
+
+              }
+
+              $this->save_subscription_payment_token( $order_id, $token_code );
+
+              wc_empty_cart();
+
+              return true;
+
+          } else {
+
+            $order = wc_get_order( $order_id );
+
+            $order->update_status( 'failed', 'Payment was declined by Rave.' );
+
+            wc_add_notice( 'Payment Failed. Try again.', 'error' );
+
+            return false;
+
+          }
+
+        } else {
+
+          wc_add_notice( 'Payment failed using the saved card. Kindly use another payment method.', 'error' );
+
+          return false;
+
+        }
+
+      } else {
+
+        wc_add_notice( 'Payment Failed.', 'error' );
+
+        return false;
+
+      }
 
     }
 
@@ -500,6 +742,83 @@
       }
       exit();    
 
+    }
+
+    /**
+	 * Save Customer Card Details
+	 */
+    public static function save_card_details( $rave_response, $user_id, $order_id ) {
+
+      if ( isset( $rave_response->data->card->card_tokens[0]->embedtoken ) ) {
+        $token_code = $rave_response->data->card->card_tokens[0]->embedtoken;
+      } else {
+        $token_code = '';
+      }
+
+      // save payment token to the order
+      self::save_subscription_payment_token( $order_id, $token_code );
+      $save_card = get_post_meta( $order_id, '_wc_rave_save_card', true );
+
+      if ( isset( $rave_response->data->card ) && $user_id && self::saved_cards && $save_card && ! empty( $token_code ) ) {
+
+        $last4 = $rave_response->data->card->last4digits;
+
+        if ( 4 !== strlen( $rave_response->data->card->expiryyear ) ) {
+          $exp_year 	= substr( date( 'Y' ), 0, 2 ) . $rave_response->data->card->expiryyear;
+        } else {
+          $exp_year 	= $rave_response->data->card->expiryyear;
+        }
+
+        $brand 		= $rave_response->data->card->brand;
+        $exp_month 	= $rave_response->data->card->expirymonth;
+        $token = new WC_Payment_Token_CC();
+        $token->set_token( $token_code );
+        $token->set_gateway_id( 'rave' );
+        $token->set_card_type( $brand );
+        $token->set_last4( $last4 );
+        $token->set_expiry_month( $exp_month  );
+        $token->set_expiry_year( $exp_year );
+        $token->set_user_id( $user_id );
+        $token->save();
+
+      }
+
+      delete_post_meta( $order_id, '_wc_rave_save_card' );
+    }
+
+    /**
+	  * Save payment token to the order for automatic renewal for further subscription payment
+	  */
+    public function save_subscription_payment_token( $order_id, $payment_token ) {
+
+      if ( ! function_exists ( 'wcs_order_contains_subscription' ) ) {
+        return;
+      }
+
+      if ( WC_Subscriptions_Order::order_contains_subscription( $order_id ) && ! empty( $payment_token ) ) {
+
+        // Also store it on the subscriptions being purchased or paid for in the order
+        if ( function_exists( 'wcs_order_contains_subscription' ) && wcs_order_contains_subscription( $order_id ) ) {
+
+          $subscriptions = wcs_get_subscriptions_for_order( $order_id );
+
+        } elseif ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order_id ) ) {
+
+          $subscriptions = wcs_get_subscriptions_for_renewal_order( $order_id );
+
+        } else {
+
+          $subscriptions = array();
+
+        }
+
+        foreach ( $subscriptions as $subscription ) {
+
+          $subscription_id = $subscription->get_id();
+          update_post_meta( $subscription_id, '_rave_wc_token', $payment_token );
+
+        }
+      }
     }
 
   }

@@ -4,10 +4,10 @@
 Plugin Name: WooCommerce Rave Payment Gateway
 Plugin URI: https://rave.flutterwave.com/
 Description: WooCommerce payment gateway for Rave.
-Version: 2.0.0
+Version: 2.1.0
 Author: Flutterwave Developers & Bosun Olanrewaju
 Author URI: http://twitter.com/bosunolanrewaju
-  License: MIT License
+License: MIT License
 */
 
 
@@ -25,6 +25,11 @@ function flw_woocommerce_rave_init() {
   if ( !class_exists( 'WC_Payment_Gateway' ) ) return;
 
   require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_payment_gateway.php' );
+
+  // include subscription if exists
+  if ( class_exists( 'WC_Subscriptions_Order' ) && class_exists( 'WC_Payment_Gateway_CC' ) ) {
+		require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_subscription_payment.php' );
+	}
 
   add_filter('woocommerce_payment_gateways', 'flw_woocommerce_add_rave_gateway' );
 
@@ -55,7 +60,15 @@ function flw_woocommerce_rave_init() {
    */
   function flw_woocommerce_add_rave_gateway($methods) {
 
-    $methods[] = 'FLW_WC_Payment_Gateway';
+    if ( class_exists( 'WC_Subscriptions_Order' ) && class_exists( 'WC_Payment_Gateway_CC' ) ) {
+
+      $methods[] = 'FLW_WC_Payment_Gateway_Subscriptions';
+
+    } else {
+
+      $methods[] = 'FLW_WC_Payment_Gateway';
+    }
+
     return $methods;
 
   }
