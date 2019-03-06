@@ -28,7 +28,9 @@ function flw_woocommerce_rave_init() {
 
   // include subscription if exists
   if ( class_exists( 'WC_Subscriptions_Order' ) && class_exists( 'WC_Payment_Gateway_CC' ) ) {
-		require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_subscription_payment.php' );
+
+    require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_subscription_payment.php' );
+    
 	}
 
   add_filter('woocommerce_payment_gateways', 'flw_woocommerce_add_rave_gateway' );
