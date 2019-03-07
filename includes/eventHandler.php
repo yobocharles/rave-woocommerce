@@ -24,6 +24,7 @@
            * This is called only when a transaction is successful
            * */
           function onSuccessful($transactionData){
+
               // Get the transaction from your DB using the transaction reference (txref)
               // Check if you have previously given value for the transaction. If you have, redirect to your successpage else, continue
               if($transactionData->chargecode === '00' || $transactionData->chargecode === '0'){

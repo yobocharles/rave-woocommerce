@@ -756,8 +756,8 @@
 	 */
     public static function save_card_details( $rave_response, $user_id, $order_id ) {
 
-      if ( isset( $rave_response->data->card->card_tokens[0]->embedtoken ) ) {
-        $token_code = $rave_response->data->card->card_tokens[0]->embedtoken;
+      if ( isset( $rave_response->card->card_tokens[0]->embedtoken ) ) {
+        $token_code = $rave_response->card->card_tokens[0]->embedtoken;
       } else {
         $token_code = '';
       }

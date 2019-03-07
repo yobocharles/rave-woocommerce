@@ -87,6 +87,8 @@ var processPayment = function() {
       }else{
           alert(response.respmsg);
       }
+
+      popup.close(); // close modal
     }
   });
 

@@ -59,7 +59,7 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
         $response = $this->process_subscription_payment( $renewal_order, $amount_to_charge );
 
         if ( is_wp_error( $response ) ) {
-            $renewal_order->update_status( 'failed', sprintf( 'Rave Transaction Failed (%s)', $response->get_error_message() ) );
+            $renewal_order->update_status( 'failed', sprintf( 'Rave Transaction Failed: (%s)', $response->get_error_message() ) );
         }
     }
 
@@ -79,8 +79,21 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
      */
     public function process_subscription_payment( $order = '', $amount = 0 ) {
 
-        $order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;
-        $auth_code = get_post_meta( $order_id, '_rave_wc_token', true );
+        $order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;       
+
+        // get subscription from order
+        // $subscriptions = wcs_get_subscriptions_for_order( $order_id );
+        // file_put_contents('SUB_'.time(), json_encode(json_decode($subscriptions)));
+        // // get the subscription order
+        // foreach ( $subscriptions as $subscription ) {
+
+        //     $subscription_id = $subscription->get_id();
+
+        // }
+        // get token attached for this subscription id
+        $auth_code = get_post_meta( $order_id, '_rave_wc_token', true);
+
+        // file_put_contents('Auth_Code_'.time(), json_encode($auth_code));
 
         if ( $auth_code ) {
 
