@@ -3,8 +3,8 @@
  - **Contributors:** Flutterwave Developers
  - **Tags:** rave, woocommerce, payment gateway, bank account, credit card, debit card, nigeria, kenya, international, mastercard, visa, barter
  - **Requires at least:** 4.4
- - **Tested up to:** 5.0.3
- - **Stable tag:** 2.0.0
+ - **Tested up to:** 5.1.1
+ - **Stable tag:** 2.1.0
  - **License:** MIT - see below
 
 Take payments on your store using Rave.
@@ -25,6 +25,14 @@ Rave is available in:
 * __Nigeria__
 * __Ghana__
 * __Kenya__
+* __Uganda__
+* __Tanzania__
+* __Rwanda__
+* __South Africa__
+
+
+## Recurring Payment Support
+For Recurring payment, you will need to install the [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) plugin. No subscription plans is created on Rave. The WooCommerce Subscriptions plugin handles all the subscription functionality.
 
 
 
@@ -96,15 +104,12 @@ To configure the plugin, go to __WooCommerce > Settings__ from the left menu, cl
 
 ### Suggestions / Contributions
 
-For issues and feature request, [click here](https://github.com/bosunolanrewaju/WooCommerce-Rave-Payment-Gateway/issues).
 To contribute, fork the repo, add your changes and modifications then create a pull request.
 
 
 ### License
 
 ##### MIT License
-
-Copyright (c) 2016 Olatunbosun Olanrewaju
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -18,22 +18,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'FLW_WC_PLUGIN_FILE', __FILE__ );
 define( 'FLW_WC_DIR_PATH', plugin_dir_path( FLW_WC_PLUGIN_FILE ) );
 
-add_action('plugins_loaded', 'flw_woocommerce_rave_init', 0);
 
-function flw_woocommerce_rave_init() {
 
-  if ( !class_exists( 'WC_Payment_Gateway' ) ) return;
+  function flw_woocommerce_rave_init() {
 
-  require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_payment_gateway.php' );
+    if ( !class_exists( 'WC_Payment_Gateway' ) ) return;
 
-  // include subscription if exists
-  if ( class_exists( 'WC_Subscriptions_Order' ) && class_exists( 'WC_Payment_Gateway_CC' ) ) {
+    require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_payment_gateway.php' );
 
-    require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_subscription_payment.php' );
-    
-	}
+    // include subscription if exists
+    if ( class_exists( 'WC_Subscriptions_Order' ) && class_exists( 'WC_Payment_Gateway_CC' ) ) {
 
-  add_filter('woocommerce_payment_gateways', 'flw_woocommerce_add_rave_gateway' );
+      require_once( FLW_WC_DIR_PATH . 'includes/class.flw_wc_subscription_payment.php' );
+      
+    }
+
+    add_filter('woocommerce_payment_gateways', 'flw_woocommerce_add_rave_gateway', 99 );
+  }
+  add_action('plugins_loaded', 'flw_woocommerce_rave_init', 99);
 
   /**
    * Add the Settings link to the plugin
@@ -50,7 +52,6 @@ function flw_woocommerce_rave_init() {
     return $links;
 
   }
-
   add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), 'flw_plugin_action_links' );
 
   /**
@@ -74,6 +75,6 @@ function flw_woocommerce_rave_init() {
     return $methods;
 
   }
-}
+
 
 ?>

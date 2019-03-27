@@ -54,32 +54,25 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
     /**
      * Process a subscription renewal
      */
-    public function scheduled_subscription_payment( $amount_to_charge, $renewal_order ) {
+    public function scheduled_subscription_payment( $amount_to_charge, $renewal_order, $product_id ) {
 
         $response = $this->process_subscription_payment( $renewal_order, $amount_to_charge );
 
         if ( is_wp_error( $response ) ) {
             $renewal_order->update_status( 'failed', sprintf( 'Rave Transaction Failed: (%s)', $response->get_error_message() ) );
-        }
+            // WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $renewal_order, $product_id );
+        } 
+        // else {
+        //     WC_Subscriptions_Manager::process_subscription_payments_on_order( $order );
+        // }
     }
-
-    // function xscheduled_subscription_payment( $amount_to_charge, $order, $product_id ) {
-
-    //     $result = $this->process_subscription_payment( $order, $amount_to_charge );
-    
-    //     if ( is_wp_error( $result ) ) {
-    //         WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $order, $product_id );
-    //     } else {
-    //         WC_Subscriptions_Manager::process_subscription_payments_on_order( $order );
-    //     }
-    // }
 
     /**
      * Process a subscription renewal payment
      */
     public function process_subscription_payment( $order = '', $amount = 0 ) {
 
-        $order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;       
+        $order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;
 
         // get subscription from order
         // $subscriptions = wcs_get_subscriptions_for_order( $order_id );
@@ -93,7 +86,7 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
         // get token attached for this subscription id
         $auth_code = get_post_meta( $order_id, '_rave_wc_token', true);
 
-        // file_put_contents('Auth_Code_'.time(), json_encode($auth_code));
+        file_put_contents('4_'.time(), json_encode($auth_code));//////////
 
         if ( $auth_code ) {
 
@@ -153,18 +146,6 @@ class FLW_WC_Payment_Gateway_Subscriptions extends FLW_WC_Payment_Gateway {
                     $txn_ref     = $response->data->txRef;
                     $payment_ref = $response->data->flwRef;
 	                $amount_charged = $response->data->charged_amount;
-	                // $rave_fee       = $response->data->appfee;
-                    // $rave_net       = $amount_charged - $rave_fee;
-                    
-	                // if ( $this->is_wc_lt( '3.0' ) ) {
-		            //     update_post_meta( $order_id, '_rave_fee', $rave_fee );
-		            //     update_post_meta( $order_id, '_rave_net', $rave_net );
-		            //     update_post_meta( $order_id, '_rave_currency', $payment_currency );
-	                // } else {
-		            //     $order->update_meta_data( '_rave_fee', $rave_fee );
-		            //     $order->update_meta_data( '_rave_net', $rave_net );
-		            //     $order->update_meta_data( '_rave_currency', $payment_currency );
-                    // }
                     
                     $order->payment_complete( $order_id );
                     $message = ( sprintf( 'Payment via Rave successful (<strong>Transaction Reference:</strong> %s | <strong>Payment Reference:</strong> %s)', $txn_ref, $payment_ref ) );
