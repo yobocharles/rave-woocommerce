@@ -24,6 +24,7 @@
            * This is called only when a transaction is successful
            * */
           function onSuccessful($transactionData){
+
               // Get the transaction from your DB using the transaction reference (txref)
               // Check if you have previously given value for the transaction. If you have, redirect to your successpage else, continue
               if($transactionData->chargecode === '00' || $transactionData->chargecode === '0'){
@@ -31,6 +32,7 @@
                       $this->order->payment_complete( $this->order->id );
                       $this->order->add_order_note('Payment was successful on Rave');
                       $this->order->add_order_note('Flutterwave transaction reference: '.$transactionData->flwref); 
+
                         $customer_note  = 'Thank you for your order.<br>';
                         $customer_note .= 'Your payment was successful, we are now <strong>processing</strong> your order.';
         
@@ -50,9 +52,20 @@
             
                         wc_add_notice( $customer_note, 'notice' );
                   }
+
+                  //get order_id from the txref
+                  $getOrderId = explode('_', $transactionData->txref);
+                  $order_id = $getOrderId[1];
+
+                  //save the card token returned here
+                  FLW_WC_Payment_Gateway::save_card_details($transactionData, $this->order->get_user_id(), $order_id);
+
                   WC()->cart->empty_cart();
+
               }else{
+
                   $this->onFailure($transactionData);
+                  
               }
               
           }

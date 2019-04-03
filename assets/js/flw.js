@@ -63,7 +63,7 @@ switch (curr) {
 }
 
 var processPayment = function() {
-  console.log(firstname+" .......... "+lastname);
+  // console.log(firstname+" .......... "+lastname);
 
   var popup = getpaidSetup({
     amount: amount,
@@ -87,6 +87,8 @@ var processPayment = function() {
       }else{
           alert(response.respmsg);
       }
+
+      popup.close(); // close modal
     }
   });
 

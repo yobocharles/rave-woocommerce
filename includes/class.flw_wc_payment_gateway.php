@@ -47,6 +47,25 @@
       $this->country = $this->get_option( 'country' );
       $this->modal_logo = $this->get_option( 'modal_logo' );
 
+      // enable saved cards
+      // $this->saved_cards = $this->get_option( 'saved_cards' ) === 'yes' ? true : false;
+
+      // declare support for Woocommerce subscription
+      $this->supports = array(
+        'products',
+        'tokenization',
+        'subscriptions',
+        'subscription_cancellation', 
+        'subscription_suspension', 
+        'subscription_reactivation',
+        'subscription_amount_changes',
+        'subscription_date_changes',
+        'subscription_payment_method_change',
+        'subscription_payment_method_change_customer',
+        'subscription_payment_method_change_admin',
+        'multiple_subscriptions',
+      );
+
       add_action( 'admin_notices', array( $this, 'admin_notices' ) );
       add_action( 'woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
       add_action( 'woocommerce_api_flw_wc_payment_gateway', array($this, 'flw_verify_payment'));
@@ -65,7 +84,7 @@
       if ( 'yes' === $this->go_live ) {
         $this->base_url = 'https://api.ravepay.co';
         $this->public_key   = $this->live_public_key;
-       $this->secret_key   = $this->live_secret_key;
+        $this->secret_key   = $this->live_secret_key;
      
       }
 
@@ -178,11 +197,19 @@
           'default'     => 'NG'
         ),
         'modal_logo' => array(
-           'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
-           'type'        => 'text',
-           'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
-           'default'     => ''
-         )
+          'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
+          'type'        => 'text',
+          'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
+          'default'     => ''
+        ),
+        // 'saved_cards'   => array(
+        //   'title'       => __('Saved Cards', 'flw-payments' ),
+        //   'label'       => __('Enable Payment via Saved Cards', 'flw-payments' ),
+        //   'type'        => 'checkbox',
+        //   'description' => __('If enabled, users will be able to pay with a saved card during checkout. Card details are saved on Rave servers, not on your store.<br>Note that you need to have a valid SSL certificate installed.', 'flw-payments' ),
+        //   'default'     => 'no',
+        //   'desc_tip'    => true,
+        // ),
 
       );
 
@@ -196,7 +223,7 @@
     public function process_payment( $order_id ) {
 
       $order = wc_get_order( $order_id );
-
+  
       return array(
         'result'   => 'success',
         'redirect' => $order->get_checkout_payment_url( true )
@@ -204,6 +231,7 @@
 
     }
 
+    
     /**
      * Handles admin notices
      *
@@ -500,6 +528,84 @@
       }
       exit();    
 
+    }
+
+    /**
+	 * Save Customer Card Details
+	 */
+    public static function save_card_details( $rave_response, $user_id, $order_id ) {
+
+      if ( isset( $rave_response->card->card_tokens[0]->embedtoken ) ) {
+        $token_code = $rave_response->card->card_tokens[0]->embedtoken;
+      } else {
+        $token_code = '';
+      }
+
+      // save payment token to the order
+      self::save_subscription_payment_token( $order_id, $token_code );
+      // $save_card = get_post_meta( $order_id, '_wc_rave_save_card', true );
+
+      // if ( isset( $rave_response->data->card ) && $user_id && self::saved_cards && $save_card && ! empty( $token_code ) ) {
+
+      //   $last4 = $rave_response->data->card->last4digits;
+
+      //   if ( 4 !== strlen( $rave_response->data->card->expiryyear ) ) {
+      //     $exp_year 	= substr( date( 'Y' ), 0, 2 ) . $rave_response->data->card->expiryyear;
+      //   } else {
+      //     $exp_year 	= $rave_response->data->card->expiryyear;
+      //   }
+
+      //   $brand 		= $rave_response->data->card->brand;
+      //   $exp_month 	= $rave_response->data->card->expirymonth;
+      //   $token = new WC_Payment_Token_CC();
+      //   $token->set_token( $token_code );
+      //   $token->set_gateway_id( 'rave' );
+      //   $token->set_card_type( $brand );
+      //   $token->set_last4( $last4 );
+      //   $token->set_expiry_month( $exp_month  );
+      //   $token->set_expiry_year( $exp_year );
+      //   $token->set_user_id( $user_id );
+      //   $token->save();
+
+      // }
+
+      // delete_post_meta( $order_id, '_wc_rave_save_card' );
+    }
+
+    /**
+	  * Save payment token to the order for automatic renewal for further subscription payment
+	  */
+    public function save_subscription_payment_token( $order_id, $payment_token ) {
+
+      if ( ! function_exists ( 'wcs_order_contains_subscription' ) ) {
+        return;
+      }
+
+      if ( WC_Subscriptions_Order::order_contains_subscription( $order_id ) && ! empty( $payment_token ) ) {
+
+        // Also store it on the subscriptions being purchased or paid for in the order
+        if ( function_exists( 'wcs_order_contains_subscription' ) && wcs_order_contains_subscription( $order_id ) ) {
+
+          $subscriptions = wcs_get_subscriptions_for_order( $order_id );
+
+        } elseif ( function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order_id ) ) {
+
+          $subscriptions = wcs_get_subscriptions_for_renewal_order( $order_id );
+
+        } else {
+
+          $subscriptions = array();
+
+        }
+
+        foreach ( $subscriptions as $subscription ) {
+
+          $subscription_id = $subscription->get_id();
+
+          update_post_meta( $subscription_id, '_rave_wc_token', $payment_token );
+
+        }
+      }
     }
 
   }

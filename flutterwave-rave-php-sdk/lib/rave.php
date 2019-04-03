@@ -425,8 +425,6 @@ class Rave {
         $data = array(
             'txref' => $this->txref,
             'SECKEY' => $this->secretKey,
-            // 'last_attempt' => '1'
-            // 'only_successful' => '1'
         );
 
         // make request to endpoint using unirest.
@@ -444,7 +442,8 @@ class Rave {
 
             //log error
             $err = $e->getMessage();
-            file_put_contents('Rave_Err_'.time(), (string)$err);
+            file_put_contents('Rave_Err_'.time(), $err);
+            echo $err;
         }
   
         //check the status is success
