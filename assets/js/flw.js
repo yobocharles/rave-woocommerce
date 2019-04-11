@@ -14,7 +14,7 @@
 
 // 'use strict';
 
-var raveLogo = 'https://res.cloudinary.com/dkbfehjxf/image/upload/v1511542310/Pasted_image_at_2017_11_09_04_50_PM_vc75kz.png'
+// var raveLogo = 'https://res.cloudinary.com/dkbfehjxf/image/upload/v1511542310/Pasted_image_at_2017_11_09_04_50_PM_vc75kz.png'
 var amount = flw_payment_args.amount,
     cbUrl  = flw_payment_args.cb_url,
     country = flw_payment_args.country,
@@ -24,11 +24,11 @@ var amount = flw_payment_args.amount,
     firstname = flw_payment_args.firstname,
     lastname = flw_payment_args.lastname,
     form   = jQuery( '#flw-pay-now-button' ),
-    logo   = flw_payment_args.logo || raveLogo,
+    // logo   = flw_payment_args.logo || raveLogo,
     p_key  = flw_payment_args.p_key,
     title  = flw_payment_args.title,
     txref  = flw_payment_args.txnref,
-    paymentMethod  = flw_payment_args.payment_method,
+    paymentOptions = flw_payment_args.payment_options,
     paymentStyle  = flw_payment_args.payment_style,
     redirect_url;
 
@@ -56,6 +56,9 @@ switch (curr) {
   case 'ZAR':
     country = 'ZA';
     break;
+  case 'TZS':
+    country = 'TZ';
+    break;
 
   default:
     country = 'NG';
@@ -71,12 +74,12 @@ var processPayment = function() {
     currency: curr,
     custom_description: desc,
     custom_title: title,
-    custom_logo: logo,
+    // custom_logo: logo,
     customer_email: email,
     customer_firstname: firstname,
     customer_lastname: lastname,
     txref: txref,
-    payment_method: paymentMethod,
+    payment_options: paymentOptions,
     PBFPubKey: p_key,
     onclose: function() {},
     callback: function(response){
