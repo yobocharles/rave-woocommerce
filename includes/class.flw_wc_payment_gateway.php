@@ -21,7 +21,7 @@
      */
     public function __construct() {
 
-      $this->base_url = 'https://ravesandboxapi.flutterwave.com';
+      $this->base_url = 'https://api.ravepay.co';
       $this->id = 'rave';
       $this->icon = plugins_url('assets/img/rave.png', FLW_WC_PLUGIN_FILE);
       $this->has_fields         = false;
@@ -42,10 +42,10 @@
       $this->live_public_key   = $this->get_option( 'live_public_key' );
       $this->live_secret_key   = $this->get_option( 'live_secret_key' );
       $this->go_live      = $this->get_option( 'go_live' );
-      $this->payment_method = $this->get_option( 'payment_method' );
+      $this->payment_options = $this->get_option( 'payment_options' );
       $this->payment_style = $this->get_option( 'payment_style' );
-      $this->country = $this->get_option( 'country' );
-      $this->modal_logo = $this->get_option( 'modal_logo' );
+      // $this->country = $this->get_option( 'country' );
+      // $this->modal_logo = $this->get_option( 'modal_logo' );
 
       // enable saved cards
       // $this->saved_cards = $this->get_option( 'saved_cards' ) === 'yes' ? true : false;
@@ -82,7 +82,7 @@
      
 
       if ( 'yes' === $this->go_live ) {
-        $this->base_url = 'https://api.ravepay.co';
+        // $this->base_url = 'https://api.ravepay.co';
         $this->public_key   = $this->live_public_key;
         $this->secret_key   = $this->live_secret_key;
      
@@ -120,7 +120,7 @@
         'webhook' => array(
           'title'       => __( 'Webhook Instruction', 'flw-payments' ),
           'type'        => 'hidden',
-          'description' => __( 'Please copy this webhook URL and paste on the webhook section on your dashboard <strong style="color: red"><pre><code>'.WC()->api_request_url('Flw_WC_Payment_Webhook').'</code></pre></strong> (<a href="https://rave.flutterwave.com/dashboard/settings/webhooks" target="_blank">Live Account</a>) & (<a href="https://ravesandbox.flutterwave.com/dashboard/settings/webhooks" target="_blank">Test Account</a>)', 'flw-payments' ),
+          'description' => __( 'Please copy this webhook URL and paste on the webhook section on your dashboard <strong style="color: red"><pre><code>'.WC()->api_request_url('Flw_WC_Payment_Webhook').'</code></pre></strong> (<a href="https://rave.flutterwave.com/dashboard/settings/webhooks" target="_blank">Rave Account</a>)', 'flw-payments' ),
         ),
         'secret_hash' => array(
           'title'       => __( 'Enter Secret Hash', 'flw-payments' ),
@@ -174,41 +174,37 @@
           ),
           'default'     => 'inline'
         ),
-        'payment_method' => array(
-          'title'       => __( 'Payment Method', 'flw-payments' ),
+        'payment_options' => array(
+          'title'       => __( 'Payment Options', 'flw-payments' ),
           'type'        => 'select',
-          'description' => __( 'Optional - Choice of payment method to use. Card, Account or Both. (Default: both)', 'flw-payments' ),
+          'description' => __( 'Optional - Choice of payment method to use. Card, Account etc.', 'flw-payments' ),
           'options'     => array(
-            'both' => esc_html_x( 'Card and Account', 'payment_method', 'flw-payments' ),
-            'card'  => esc_html_x( 'Card Only',  'payment_method', 'flw-payments' ),
-            'account'  => esc_html_x( 'Account Only',  'payment_method', 'flw-payments' ),
+            '' => esc_html_x( 'Default', 'payment_options', 'flw-payments' ),
+            'card'  => esc_html_x( 'Card Only',  'payment_options', 'flw-payments' ),
+            'account'  => esc_html_x( 'Account Only',  'payment_options', 'flw-payments' ),
+            'ussd'  => esc_html_x( 'USSD Only',  'payment_options', 'flw-payments' ),
+            'qr'  => esc_html_x( 'QR Only',  'payment_options', 'flw-payments' ),
+            'mpesa'  => esc_html_x( 'Mpesa Only',  'payment_options', 'flw-payments' ),
+            'mobilemoneyghana'  => esc_html_x( 'Ghana MM Only',  'payment_options', 'flw-payments' ),
           ),
-          'default'     => 'both'
-        ),
-        'country' => array(
-          'title'       => __( 'Charge Country', 'flw-payments' ),
-          'type'        => 'select',
-          'description' => __( 'Optional - Charge country. (Default: NG)', 'flw-payments' ),
-          'options'     => array(
-            'NG' => esc_html_x( 'NG', 'country', 'flw-payments' ),
-            'GH' => esc_html_x( 'GH', 'country', 'flw-payments' ),
-            'KE' => esc_html_x( 'KE', 'country', 'flw-payments' ),
-          ),
-          'default'     => 'NG'
-        ),
-        'modal_logo' => array(
-          'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
-          'type'        => 'text',
-          'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
           'default'     => ''
         ),
-        // 'saved_cards'   => array(
-        //   'title'       => __('Saved Cards', 'flw-payments' ),
-        //   'label'       => __('Enable Payment via Saved Cards', 'flw-payments' ),
-        //   'type'        => 'checkbox',
-        //   'description' => __('If enabled, users will be able to pay with a saved card during checkout. Card details are saved on Rave servers, not on your store.<br>Note that you need to have a valid SSL certificate installed.', 'flw-payments' ),
-        //   'default'     => 'no',
-        //   'desc_tip'    => true,
+        // 'country' => array(
+        //   'title'       => __( 'Charge Country', 'flw-payments' ),
+        //   'type'        => 'select',
+        //   'description' => __( 'Optional - Charge country. (Default: NG)', 'flw-payments' ),
+        //   'options'     => array(
+        //     'NG' => esc_html_x( 'NG', 'country', 'flw-payments' ),
+        //     'GH' => esc_html_x( 'GH', 'country', 'flw-payments' ),
+        //     'KE' => esc_html_x( 'KE', 'country', 'flw-payments' ),
+        //   ),
+        //   'default'     => 'NG'
+        // ),
+        // 'modal_logo' => array(
+        //   'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
+        //   'type'        => 'text',
+        //   'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
+        //   'default'     => ''
         // ),
 
       );
@@ -285,7 +281,7 @@
 
       if ( ! is_checkout_pay_page() ) return;
       $p_key = $this->public_key;
-      $payment_method = $this->payment_method;
+      $payment_options = $this->payment_options;
        
       if( $this->payment_style == 'inline'){
         wp_enqueue_script( 'flwpbf_inline_js', $this->base_url . '/flwv3-pug/getpaidx/api/flwpbf-inline.js', array(), '1.0.0', true );
@@ -303,6 +299,7 @@
           wp_enqueue_script( 'flwpbf_inline_js', $this->base_url . '/flwv3-pug/getpaidx/api/flwpbf-inline.js', array(), '1.0.0', true );
           $cb_url = WC()->api_request_url('FLW_WC_Payment_Gateway');
         }
+
         $order     = wc_get_order( $order_id );
         
         $txnref    = "WOOC_" . $order_id . '_' . time();
@@ -332,29 +329,32 @@
         //set the currency to route to their countries
         switch ($currency) {
             case 'KES':
-              $country = 'KE';
+              $this->country = 'KE';
               break;
             case 'GHS':
-              $country = 'GH';
+              $this->country = 'GH';
               break;
             case 'ZAR':
-              $country = 'ZA';
+              $this->country = 'ZA';
+              break;
+            case 'TZS':
+              $this->country = 'TZ';
               break;
             
             default:
-              $country = 'NG';
+              $this->country = 'NG';
               break;
         }
         
-        //$country  = $this->country;
+        $country  = $this->country;
         $payment_style  = $this->payment_style;
 
         if ( $main_order_key == $order_key ) {
 
-          $payment_args = compact( 'amount', 'email', 'txnref', 'p_key', 'currency', 'country', 'payment_method','cb_url','payment_style');
+          $payment_args = compact( 'amount', 'email', 'txnref', 'p_key', 'currency', 'country', 'payment_options','cb_url','payment_style');
           $payment_args['desc']   = filter_var($this->description, FILTER_SANITIZE_STRING);
           $payment_args['title']  = filter_var($this->title, FILTER_SANITIZE_STRING);
-          $payment_args['logo'] = filter_var($this->modal_logo, FILTER_SANITIZE_URL);
+          // $payment_args['logo'] = filter_var($this->modal_logo, FILTER_SANITIZE_URL);
           $payment_args['firstname'] = $order->billing_first_name;
           $payment_args['lastname'] = $order->billing_last_name;
         }
@@ -375,13 +375,14 @@
      */
     public function flw_verify_payment() {
            
-        $publicKey = $this->public_key; // Remember to change this to your live public keys when going live
-        $secretKey = $this->secret_key; // Remember to change this to your live secret keys when going live
-        if($this->go_live === 'yes'){
-          $env = 'live';
-        }else{
-          $env = 'staging';
-        }
+        $publicKey = $this->public_key; 
+        $secretKey = $this->secret_key; 
+
+        // if($this->go_live === 'yes'){
+        //   $env = 'live';
+        // }else{
+        //   $env = 'staging';
+        // }
         $overrideRef = true;
           
        if(isset($_GET['rave_id']) && urldecode( $_GET['rave_id'] )){
@@ -396,11 +397,11 @@
          
           $ref = uniqid("WOOC_". $order_id."_".time()."_");
          
-          $payment = new Rave($publicKey, $secretKey, $ref, $env, $overrideRef);
+          $payment = new Rave($publicKey, $secretKey, $ref, $overrideRef);
           
-          if($this->modal_logo){
-            $rave_m_logo = $this->modal_logo;
-          }
+          // if($this->modal_logo){
+          //   $rave_m_logo = $this->modal_logo;
+          // }
 
           //set variables
           $modal_desc = $this->description != '' ? filter_var($this->description, FILTER_SANITIZE_STRING) : "Payment for Order ID: $order_id on ". get_bloginfo('name');
@@ -410,9 +411,9 @@
           $payment
           ->eventHandler(new myEventHandler($order))
           ->setAmount($order->order_total)
-          ->setPaymentMethod($this->payment_method) // value can be card, account or both
+          ->setPaymentOptions($this->payment_options) // value can be card, account or both
           ->setDescription($modal_desc)
-          ->setLogo($rave_m_logo)
+          // ->setLogo($rave_m_logo)
           ->setTitle($modal_title)
           ->setCountry($this->country)
           ->setCurrency($order->get_order_currency())
