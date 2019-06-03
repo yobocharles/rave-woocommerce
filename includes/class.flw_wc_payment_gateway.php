@@ -189,23 +189,6 @@
           ),
           'default'     => ''
         ),
-        // 'country' => array(
-        //   'title'       => __( 'Charge Country', 'flw-payments' ),
-        //   'type'        => 'select',
-        //   'description' => __( 'Optional - Charge country. (Default: NG)', 'flw-payments' ),
-        //   'options'     => array(
-        //     'NG' => esc_html_x( 'NG', 'country', 'flw-payments' ),
-        //     'GH' => esc_html_x( 'GH', 'country', 'flw-payments' ),
-        //     'KE' => esc_html_x( 'KE', 'country', 'flw-payments' ),
-        //   ),
-        //   'default'     => 'NG'
-        // ),
-        // 'modal_logo' => array(
-        //   'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
-        //   'type'        => 'text',
-        //   'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
-        //   'default'     => ''
-        // ),
 
       );
 
@@ -312,13 +295,13 @@
               $main_order_key = $order->get_order_key();
         }else{
             $args = array(
-                'name'    => $order->billing_first_name . ' ' . $order->billing_last_name,
-                'email'   => $order->billing_email,
-                'contact' => $order->billing_phone,
+                'name'    => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+                'email'   => $order->get_billing_email(),
+                'contact' => $order->get_billing_phone(),
             );
-            $amount    = $order->order_total;
-            $main_order_key = $order->order_key;
-            $email     = $order->billing_email;
+            $amount    = $order->get_total();
+            $main_order_key = $order->get_order_key();
+            $email     = $order->get_billing_email();
             $currency     = $order->get_order_currency();
         }
         
@@ -355,8 +338,8 @@
           $payment_args['desc']   = filter_var($this->description, FILTER_SANITIZE_STRING);
           $payment_args['title']  = filter_var($this->title, FILTER_SANITIZE_STRING);
           // $payment_args['logo'] = filter_var($this->modal_logo, FILTER_SANITIZE_URL);
-          $payment_args['firstname'] = $order->billing_first_name;
-          $payment_args['lastname'] = $order->billing_last_name;
+          $payment_args['firstname'] = $order->get_billing_first_name();
+          $payment_args['lastname'] = $order->get_billing_last_name();
         }
 
         update_post_meta( $order_id, '_flw_payment_txn_ref', $txnref );
@@ -410,17 +393,17 @@
           // Make payment
           $payment
           ->eventHandler(new myEventHandler($order))
-          ->setAmount($order->order_total)
+          ->setAmount($order->get_total())
           ->setPaymentOptions($this->payment_options) // value can be card, account or both
           ->setDescription($modal_desc)
           // ->setLogo($rave_m_logo)
           ->setTitle($modal_title)
           ->setCountry($this->country)
           ->setCurrency($order->get_order_currency())
-          ->setEmail($order->billing_email)
-          ->setFirstname($order->billing_first_name)
-          ->setLastname($order->billing_last_name)
-          ->setPhoneNumber($order->billing_phone)
+          ->setEmail($order->get_billing_email())
+          ->setFirstname($order->get_billing_first_name())
+          ->setLastname($order->get_billing_last_name())
+          ->setPhoneNumber($order->get_billing_phone())
           // ->setPayButtonText($postData['pay_button_text'])
           ->setRedirectUrl($redirectURL)
           // ->setMetaData(array('metaname' => 'SomeDataName', 'metavalue' => 'SomeValue')) // can be called multiple times. Uncomment this to add meta datas
@@ -443,7 +426,7 @@
               $o = explode('_', $txn_ref);
               $order_id = intval( $o[1] );
               $order = wc_get_order( $order_id );
-              $payment = new Rave($publicKey, $secretKey, $txn_ref, $env, $overrideRef);
+              $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
           
               $payment->logger->notice('Payment completed. Now requerying payment.');
               
@@ -453,7 +436,7 @@
               header("Location: ".$redirect_url);
               die(); 
           }else{
-            $payment = new Rave($publicKey, $secretKey, $txn_ref, $env, $overrideRef);
+            $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
           
             $payment->logger->notice('Error with requerying payment.');
             
