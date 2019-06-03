@@ -1,9 +1,9 @@
 <?php
 
 /*
-Plugin Name: WooCommerce Rave Payment Gateway
+Plugin Name: Rave WooCommerce Payment Gateway
 Plugin URI: https://rave.flutterwave.com/
-Description: WooCommerce payment gateway for Rave.
+Description: Official WooCommerce payment gateway for Rave.
 Version: 2.2.1
 Author: Flutterwave Developers
 Author URI: http://developer.flutterwave.com
