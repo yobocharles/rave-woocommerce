@@ -367,91 +367,90 @@
      */
     public function flw_verify_payment() {
            
-        $publicKey = $this->public_key; 
-        $secretKey = $this->secret_key; 
+      $publicKey = $this->public_key; 
+      $secretKey = $this->secret_key; 
 
-        // if($this->go_live === 'yes'){
-        //   $env = 'live';
-        // }else{
-        //   $env = 'staging';
+      // if($this->go_live === 'yes'){
+      //   $env = 'live';
+      // }else{
+      //   $env = 'staging';
+      // }
+      $overrideRef = true;
+        
+      if(isset($_GET['rave_id']) && urldecode( $_GET['rave_id'] )){
+        $order_id = urldecode( $_GET['rave_id'] );
+        
+        if(!$order_id){
+          $order_id = urldecode( $_GET['order_id'] );
+        }
+        $order = wc_get_order( $order_id );
+        
+        $redirectURL =  WC()->api_request_url( 'FLW_WC_Payment_Gateway' ).'?order_id='.$order_id;
+        
+        $ref = uniqid("WOOC_". $order_id."_".time()."_");
+        
+        $payment = new Rave($publicKey, $secretKey, $ref, $overrideRef);
+        
+        // if($this->modal_logo){
+        //   $rave_m_logo = $this->modal_logo;
         // }
-        $overrideRef = true;
-          
-       if(isset($_GET['rave_id']) && urldecode( $_GET['rave_id'] )){
-          $order_id = urldecode( $_GET['rave_id'] );
-          
+
+        //set variables
+        $modal_desc = $this->description != '' ? filter_var($this->description, FILTER_SANITIZE_STRING) : "Payment for Order ID: $order_id on ". get_bloginfo('name');
+        $modal_title = $this->title != '' ? filter_var($this->title, FILTER_SANITIZE_STRING) : get_bloginfo('name');
+        
+        // Make payment
+        $payment
+        ->eventHandler(new myEventHandler($order))
+        ->setAmount($order->get_total())
+        ->setPaymentOptions($this->payment_options) // value can be card, account or both
+        ->setDescription($modal_desc)
+        ->setTitle($modal_title)
+        ->setCountry($this->country)
+        ->setCurrency($order->get_order_currency())
+        ->setEmail($order->get_billing_email())
+        ->setFirstname($order->get_billing_first_name())
+        ->setLastname($order->get_billing_last_name())
+        ->setPhoneNumber($order->get_billing_phone())
+        ->setDisableBarter($this->barter)
+        ->setRedirectUrl($redirectURL)
+        // ->setMetaData(array('metaname' => 'SomeDataName', 'metavalue' => 'SomeValue')) // can be called multiple times. Uncomment this to add meta datas
+        // ->setMetaData(array('metaname' => 'SomeOtherDataName', 'metavalue' => 'SomeOtherValue')) // can be called multiple times. Uncomment this to add meta datas
+        ->initialize(); 
+        die();
+      }else{
+        if(isset($_GET['cancelled']) && isset($_GET['order_id'])){
           if(!$order_id){
             $order_id = urldecode( $_GET['order_id'] );
           }
           $order = wc_get_order( $order_id );
-          
-          $redirectURL =  WC()->api_request_url( 'FLW_WC_Payment_Gateway' ).'?order_id='.$order_id;
-         
-          $ref = uniqid("WOOC_". $order_id."_".time()."_");
-         
-          $payment = new Rave($publicKey, $secretKey, $ref, $overrideRef);
-          
-          // if($this->modal_logo){
-          //   $rave_m_logo = $this->modal_logo;
-          // }
-
-          //set variables
-          $modal_desc = $this->description != '' ? filter_var($this->description, FILTER_SANITIZE_STRING) : "Payment for Order ID: $order_id on ". get_bloginfo('name');
-          $modal_title = $this->title != '' ? filter_var($this->title, FILTER_SANITIZE_STRING) : get_bloginfo('name');
-          
-          // Make payment
-          $payment
-          ->eventHandler(new myEventHandler($order))
-          ->setAmount($order->get_total())
-          ->setPaymentOptions($this->payment_options) // value can be card, account or both
-          ->setDescription($modal_desc)
-          // ->setLogo($rave_m_logo)
-          ->setTitle($modal_title)
-          ->setCountry($this->country)
-          ->setCurrency($order->get_order_currency())
-          ->setEmail($order->get_billing_email())
-          ->setFirstname($order->get_billing_first_name())
-          ->setLastname($order->get_billing_last_name())
-          ->setPhoneNumber($order->get_billing_phone())
-          // ->setPayButtonText($postData['pay_button_text'])
-          ->setRedirectUrl($redirectURL)
-          // ->setMetaData(array('metaname' => 'SomeDataName', 'metavalue' => 'SomeValue')) // can be called multiple times. Uncomment this to add meta datas
-          // ->setMetaData(array('metaname' => 'SomeOtherDataName', 'metavalue' => 'SomeOtherValue')) // can be called multiple times. Uncomment this to add meta datas
-          ->initialize(); 
-          die();
-        }else{
-          if(isset($_GET['cancelled']) && isset($_GET['order_id'])){
-            if(!$order_id){
-              $order_id = urldecode( $_GET['order_id'] );
-            }
+          $redirectURL = $order->get_checkout_payment_url( true );
+          header("Location: ".$redirectURL);
+          die(); 
+        }
+        
+        if ( isset( $_POST['txRef'] ) || isset($_GET['txref']) ) {
+            $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
+            $o = explode('_', $txn_ref);
+            $order_id = intval( $o[1] );
             $order = wc_get_order( $order_id );
-            $redirectURL = $order->get_checkout_payment_url( true );
-            header("Location: ".$redirectURL);
-            die(); 
-          }
-         
-          if ( isset( $_POST['txRef'] ) || isset($_GET['txref']) ) {
-              $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
-              $o = explode('_', $txn_ref);
-              $order_id = intval( $o[1] );
-              $order = wc_get_order( $order_id );
-              $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
-          
-              $payment->logger->notice('Payment completed. Now requerying payment.');
-              
-              $payment->eventHandler(new myEventHandler($order))->requeryTransaction(urldecode($txn_ref));
-              
-              $redirect_url = $this->get_return_url( $order );
-              header("Location: ".$redirect_url);
-              die(); 
-          }else{
             $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
-          
-            $payment->logger->notice('Error with requerying payment.');
+        
+            $payment->logger->notice('Payment completed. Now requerying payment.');
             
-            $payment->eventHandler(new myEventHandler($order))->doNothing();
-              die();
-          }
+            $payment->eventHandler(new myEventHandler($order))->requeryTransaction(urldecode($txn_ref));
+            
+            $redirect_url = $this->get_return_url( $order );
+            header("Location: ".$redirect_url);
+            die(); 
+        }else{
+          $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
+        
+          $payment->logger->notice('Error with requerying payment.');
+          
+          $payment->eventHandler(new myEventHandler($order))->doNothing();
+            die();
+        }
       }
     }
 

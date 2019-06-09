@@ -47,6 +47,7 @@ class Rave {
     protected $transactionData;
     protected $overrideTransactionReference;
     protected $requeryCount = 0;
+    protected $disableBarter;
     
     /**
      * Construct
@@ -111,6 +112,11 @@ class Rave {
             "redirect_url" => $this->redirectUrl,
             "hosted_payment" => 1
         );
+
+        // check if the user disabled barter
+        if ($this->getDisableBarter() == 'yes'){
+            $options['disable_pwb'] = true;
+        }
         
         ksort($options);
         
@@ -150,6 +156,24 @@ class Rave {
      * */
     function getReferenceNumber(){
         return $this->txref;
+    }
+
+    /**
+     * Disable barter from the form
+     * @param string yes/no
+     * @return object
+     */
+    function setDisableBarter($barter){
+        $this->disableBarter = $barter;
+        return $this;
+    }
+
+    /**
+     * gets the disable barter decision
+     * @return string
+     */
+    function getDisableBarter(){
+        return $this->disableBarter;
     }
     
     /**
