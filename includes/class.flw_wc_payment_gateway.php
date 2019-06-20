@@ -44,7 +44,7 @@
       $this->go_live      = $this->get_option( 'go_live' );
       $this->payment_options = $this->get_option( 'payment_options' );
       $this->payment_style = $this->get_option( 'payment_style' );
-      // $this->country = $this->get_option( 'country' );
+      $this->barter = $this->get_option( 'barter' );
       // $this->modal_logo = $this->get_option( 'modal_logo' );
 
       // enable saved cards
@@ -114,6 +114,14 @@
           'label'       => __( 'Live mode', 'flw-payments' ),
           'type'        => 'checkbox',
           'description' => __( 'Check this box if you\'re using your live keys.', 'flw-payments' ),
+          'default'     => 'no',
+          'desc_tip'    => true
+        ),
+        'barter' => array(
+          'title'       => __( 'Disable Barter', 'flw-payments' ),
+          'label'       => __( 'Disable Barter', 'flw-payments' ),
+          'type'        => 'checkbox',
+          'description' => __( 'Check the box if you want to disable barter.', 'flw-payments' ),
           'default'     => 'no',
           'desc_tip'    => true
         ),
@@ -189,23 +197,6 @@
           ),
           'default'     => ''
         ),
-        // 'country' => array(
-        //   'title'       => __( 'Charge Country', 'flw-payments' ),
-        //   'type'        => 'select',
-        //   'description' => __( 'Optional - Charge country. (Default: NG)', 'flw-payments' ),
-        //   'options'     => array(
-        //     'NG' => esc_html_x( 'NG', 'country', 'flw-payments' ),
-        //     'GH' => esc_html_x( 'GH', 'country', 'flw-payments' ),
-        //     'KE' => esc_html_x( 'KE', 'country', 'flw-payments' ),
-        //   ),
-        //   'default'     => 'NG'
-        // ),
-        // 'modal_logo' => array(
-        //   'title'       => __( 'Modal Custom Logo', 'flw-payments' ),
-        //   'type'        => 'text',
-        //   'description' => __( 'Optional - URL to your store\'s logo. Preferably a square image', 'flw-payments' ),
-        //   'default'     => ''
-        // ),
 
       );
 
@@ -312,13 +303,13 @@
               $main_order_key = $order->get_order_key();
         }else{
             $args = array(
-                'name'    => $order->billing_first_name . ' ' . $order->billing_last_name,
-                'email'   => $order->billing_email,
-                'contact' => $order->billing_phone,
+                'name'    => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+                'email'   => $order->get_billing_email(),
+                'contact' => $order->get_billing_phone(),
             );
-            $amount    = $order->order_total;
-            $main_order_key = $order->order_key;
-            $email     = $order->billing_email;
+            $amount    = $order->get_total();
+            $main_order_key = $order->get_order_key();
+            $email     = $order->get_billing_email();
             $currency     = $order->get_order_currency();
         }
         
@@ -355,8 +346,9 @@
           $payment_args['desc']   = filter_var($this->description, FILTER_SANITIZE_STRING);
           $payment_args['title']  = filter_var($this->title, FILTER_SANITIZE_STRING);
           // $payment_args['logo'] = filter_var($this->modal_logo, FILTER_SANITIZE_URL);
-          $payment_args['firstname'] = $order->billing_first_name;
-          $payment_args['lastname'] = $order->billing_last_name;
+          $payment_args['firstname'] = $order->get_billing_first_name();
+          $payment_args['lastname'] = $order->get_billing_last_name();
+          $payment_args['barter'] = $this->barter;
         }
 
         update_post_meta( $order_id, '_flw_payment_txn_ref', $txnref );
@@ -375,91 +367,90 @@
      */
     public function flw_verify_payment() {
            
-        $publicKey = $this->public_key; 
-        $secretKey = $this->secret_key; 
+      $publicKey = $this->public_key; 
+      $secretKey = $this->secret_key; 
 
-        // if($this->go_live === 'yes'){
-        //   $env = 'live';
-        // }else{
-        //   $env = 'staging';
+      // if($this->go_live === 'yes'){
+      //   $env = 'live';
+      // }else{
+      //   $env = 'staging';
+      // }
+      $overrideRef = true;
+        
+      if(isset($_GET['rave_id']) && urldecode( $_GET['rave_id'] )){
+        $order_id = urldecode( $_GET['rave_id'] );
+        
+        if(!$order_id){
+          $order_id = urldecode( $_GET['order_id'] );
+        }
+        $order = wc_get_order( $order_id );
+        
+        $redirectURL =  WC()->api_request_url( 'FLW_WC_Payment_Gateway' ).'?order_id='.$order_id;
+        
+        $ref = uniqid("WOOC_". $order_id."_".time()."_");
+        
+        $payment = new Rave($publicKey, $secretKey, $ref, $overrideRef);
+        
+        // if($this->modal_logo){
+        //   $rave_m_logo = $this->modal_logo;
         // }
-        $overrideRef = true;
-          
-       if(isset($_GET['rave_id']) && urldecode( $_GET['rave_id'] )){
-          $order_id = urldecode( $_GET['rave_id'] );
-          
+
+        //set variables
+        $modal_desc = $this->description != '' ? filter_var($this->description, FILTER_SANITIZE_STRING) : "Payment for Order ID: $order_id on ". get_bloginfo('name');
+        $modal_title = $this->title != '' ? filter_var($this->title, FILTER_SANITIZE_STRING) : get_bloginfo('name');
+        
+        // Make payment
+        $payment
+        ->eventHandler(new myEventHandler($order))
+        ->setAmount($order->get_total())
+        ->setPaymentOptions($this->payment_options) // value can be card, account or both
+        ->setDescription($modal_desc)
+        ->setTitle($modal_title)
+        ->setCountry($this->country)
+        ->setCurrency($order->get_order_currency())
+        ->setEmail($order->get_billing_email())
+        ->setFirstname($order->get_billing_first_name())
+        ->setLastname($order->get_billing_last_name())
+        ->setPhoneNumber($order->get_billing_phone())
+        ->setDisableBarter($this->barter)
+        ->setRedirectUrl($redirectURL)
+        // ->setMetaData(array('metaname' => 'SomeDataName', 'metavalue' => 'SomeValue')) // can be called multiple times. Uncomment this to add meta datas
+        // ->setMetaData(array('metaname' => 'SomeOtherDataName', 'metavalue' => 'SomeOtherValue')) // can be called multiple times. Uncomment this to add meta datas
+        ->initialize(); 
+        die();
+      }else{
+        if(isset($_GET['cancelled']) && isset($_GET['order_id'])){
           if(!$order_id){
             $order_id = urldecode( $_GET['order_id'] );
           }
           $order = wc_get_order( $order_id );
-          
-          $redirectURL =  WC()->api_request_url( 'FLW_WC_Payment_Gateway' ).'?order_id='.$order_id;
-         
-          $ref = uniqid("WOOC_". $order_id."_".time()."_");
-         
-          $payment = new Rave($publicKey, $secretKey, $ref, $overrideRef);
-          
-          // if($this->modal_logo){
-          //   $rave_m_logo = $this->modal_logo;
-          // }
-
-          //set variables
-          $modal_desc = $this->description != '' ? filter_var($this->description, FILTER_SANITIZE_STRING) : "Payment for Order ID: $order_id on ". get_bloginfo('name');
-          $modal_title = $this->title != '' ? filter_var($this->title, FILTER_SANITIZE_STRING) : get_bloginfo('name');
-          
-          // Make payment
-          $payment
-          ->eventHandler(new myEventHandler($order))
-          ->setAmount($order->order_total)
-          ->setPaymentOptions($this->payment_options) // value can be card, account or both
-          ->setDescription($modal_desc)
-          // ->setLogo($rave_m_logo)
-          ->setTitle($modal_title)
-          ->setCountry($this->country)
-          ->setCurrency($order->get_order_currency())
-          ->setEmail($order->billing_email)
-          ->setFirstname($order->billing_first_name)
-          ->setLastname($order->billing_last_name)
-          ->setPhoneNumber($order->billing_phone)
-          // ->setPayButtonText($postData['pay_button_text'])
-          ->setRedirectUrl($redirectURL)
-          // ->setMetaData(array('metaname' => 'SomeDataName', 'metavalue' => 'SomeValue')) // can be called multiple times. Uncomment this to add meta datas
-          // ->setMetaData(array('metaname' => 'SomeOtherDataName', 'metavalue' => 'SomeOtherValue')) // can be called multiple times. Uncomment this to add meta datas
-          ->initialize(); 
-          die();
-        }else{
-          if(isset($_GET['cancelled']) && isset($_GET['order_id'])){
-            if(!$order_id){
-              $order_id = urldecode( $_GET['order_id'] );
-            }
+          $redirectURL = $order->get_checkout_payment_url( true );
+          header("Location: ".$redirectURL);
+          die(); 
+        }
+        
+        if ( isset( $_POST['txRef'] ) || isset($_GET['txref']) ) {
+            $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
+            $o = explode('_', $txn_ref);
+            $order_id = intval( $o[1] );
             $order = wc_get_order( $order_id );
-            $redirectURL = $order->get_checkout_payment_url( true );
-            header("Location: ".$redirectURL);
-            die(); 
-          }
-         
-          if ( isset( $_POST['txRef'] ) || isset($_GET['txref']) ) {
-              $txn_ref = isset($_POST['txRef']) ? $_POST['txRef'] : urldecode($_GET['txref']);
-              $o = explode('_', $txn_ref);
-              $order_id = intval( $o[1] );
-              $order = wc_get_order( $order_id );
-              $payment = new Rave($publicKey, $secretKey, $txn_ref, $env, $overrideRef);
-          
-              $payment->logger->notice('Payment completed. Now requerying payment.');
-              
-              $payment->eventHandler(new myEventHandler($order))->requeryTransaction(urldecode($txn_ref));
-              
-              $redirect_url = $this->get_return_url( $order );
-              header("Location: ".$redirect_url);
-              die(); 
-          }else{
-            $payment = new Rave($publicKey, $secretKey, $txn_ref, $env, $overrideRef);
-          
-            $payment->logger->notice('Error with requerying payment.');
+            $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
+        
+            $payment->logger->notice('Payment completed. Now requerying payment.');
             
-            $payment->eventHandler(new myEventHandler($order))->doNothing();
-              die();
-          }
+            $payment->eventHandler(new myEventHandler($order))->requeryTransaction(urldecode($txn_ref));
+            
+            $redirect_url = $this->get_return_url( $order );
+            header("Location: ".$redirect_url);
+            die(); 
+        }else{
+          $payment = new Rave($publicKey, $secretKey, $txn_ref, $overrideRef);
+        
+          $payment->logger->notice('Error with requerying payment.');
+          
+          $payment->eventHandler(new myEventHandler($order))->doNothing();
+            die();
+        }
       }
     }
 
@@ -546,31 +537,7 @@
       self::save_subscription_payment_token( $order_id, $token_code );
       // $save_card = get_post_meta( $order_id, '_wc_rave_save_card', true );
 
-      // if ( isset( $rave_response->data->card ) && $user_id && self::saved_cards && $save_card && ! empty( $token_code ) ) {
-
-      //   $last4 = $rave_response->data->card->last4digits;
-
-      //   if ( 4 !== strlen( $rave_response->data->card->expiryyear ) ) {
-      //     $exp_year 	= substr( date( 'Y' ), 0, 2 ) . $rave_response->data->card->expiryyear;
-      //   } else {
-      //     $exp_year 	= $rave_response->data->card->expiryyear;
-      //   }
-
-      //   $brand 		= $rave_response->data->card->brand;
-      //   $exp_month 	= $rave_response->data->card->expirymonth;
-      //   $token = new WC_Payment_Token_CC();
-      //   $token->set_token( $token_code );
-      //   $token->set_gateway_id( 'rave' );
-      //   $token->set_card_type( $brand );
-      //   $token->set_last4( $last4 );
-      //   $token->set_expiry_month( $exp_month  );
-      //   $token->set_expiry_year( $exp_year );
-      //   $token->set_user_id( $user_id );
-      //   $token->save();
-
-      // }
-
-      // delete_post_meta( $order_id, '_wc_rave_save_card' );
+      
     }
 
     /**

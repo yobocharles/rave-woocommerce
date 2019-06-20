@@ -3,8 +3,8 @@
  - **Contributors:** Flutterwave Developers
  - **Tags:** rave, woocommerce, payment gateway, bank account, credit card, debit card, nigeria, kenya, international, mastercard, visa, barter
  - **Requires at least:** 4.4
- - **Tested up to:** 5.1.1
- - **Stable tag:** 2.2.0
+ - **Tested up to:** 5.2.1
+ - **Stable tag:** 2.2.1
  - **License:** MIT - see below
 
 Take payments on your store using Rave.

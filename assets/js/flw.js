@@ -30,6 +30,7 @@ var amount = flw_payment_args.amount,
     txref  = flw_payment_args.txnref,
     paymentOptions = flw_payment_args.payment_options,
     paymentStyle  = flw_payment_args.payment_style,
+    disableBarter  = flw_payment_args.barter,
     redirect_url;
 
 if ( form ) {
@@ -68,7 +69,8 @@ switch (curr) {
 var processPayment = function() {
   // console.log(firstname+" .......... "+lastname);
 
-  var popup = getpaidSetup({
+  // setup payload
+  var ravePayload = {
     amount: amount,
     country: country,
     currency: curr,
@@ -93,7 +95,15 @@ var processPayment = function() {
 
       popup.close(); // close modal
     }
-  });
+  }
+
+  // disable barter or not
+  if(disableBarter == 'yes'){
+    ravePayload.disable_pwb = true;
+  }
+
+  // add payload
+  var popup = getpaidSetup(ravePayload);
 
 };
 
