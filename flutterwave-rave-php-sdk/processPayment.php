@@ -11,10 +11,10 @@ use Flutterwave\Rave\EventHandlerInterface;
 $URL = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://'.$_SERVER[HTTP_HOST].$_SERVER[REQUEST_URI];
 $getData = $_GET;
 $postData = $_POST;
-$publicKey = '****YOUR**PUBLIC**KEY****'; // Remember to change this to your live public keys when going live
-$secretKey = '****YOUR**SECRET**KEY****'; // Remember to change this to your live secret keys when going live
+$publicKey = 'FLWPUBK-30582f5ade12d1b4f672542a0071c0f6-X'; // Remember to change this to your live public keys when going live
+$secretKey = 'FLWSECK-b41e793b5da36c8b1d8032bdda9e28f5-X'; // Remember to change this to your live secret keys when going live
 $env = 'staging'; // Remember to change this to 'live' when you are going live
-$prefix = 'MY_APP_NAME'; // Change this to the name of your business or app
+$prefix = 'NEXSU'; // Change this to the name of your business or app
 $overrideRef = false;
 
 // Uncomment here to enforce the useage of your own ref else a ref will be generated for you automatically
